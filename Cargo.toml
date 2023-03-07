@@ -19,7 +19,7 @@ default = ["native-tls"]
 sqlite = ["sqlx/sqlite"]
 pg = ["sqlx/postgres", "sqlx/json"]
 native-tls = ["sqlx/runtime-async-std-native-tls"]
-rustls = ["sqlx/runtime-async-std-rustls"]
+rustls = ["sqlx/runtime-tokio-rustls"]
 async_std = ["async-std"]
 mysql = ["sqlx/mysql", "sqlx/json"]
 
@@ -33,4 +33,4 @@ async-std = { version = "1.12.0", features = ["attributes"] }
 
 [dev-dependencies.sqlx]
 version = "0.6.2"
-features = ["chrono", "runtime-async-std-native-tls"]
+features = ["chrono", "runtime-tokio-rustls"]

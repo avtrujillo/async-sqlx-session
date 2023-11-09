@@ -230,7 +230,7 @@ impl SqliteSessionStore {
     /// # Ok(()) }) }
     /// ```
     pub async fn cleanup(&self) -> sqlx::Result<()> {
-        let mut connection = self.connection().await?;
+        let mut connection = *self.connection().await?;
         sqlx::query(&self.substitute_table_name(
             r#"
             DELETE FROM %%TABLE_NAME%%
@@ -263,7 +263,7 @@ impl SqliteSessionStore {
     pub async fn count(&self) -> sqlx::Result<i32> {
         let (count,) =
             sqlx::query_as(&self.substitute_table_name("SELECT COUNT(*) FROM %%TABLE_NAME%%"))
-                .fetch_one(&mut self.connection().await?)
+                .fetch_one(&mut *self.connection().await?)
                 .await?;
 
         Ok(count)
@@ -274,7 +274,7 @@ impl SqliteSessionStore {
 impl SessionStore for SqliteSessionStore {
     async fn load_session(&self, cookie_value: String) -> Result<Option<Session>> {
         let id = Session::id_from_cookie_value(&cookie_value)?;
-        let mut connection = self.connection().await?;
+        let mut connection = *self.connection().await?;
 
         let result: Option<(String,)> = sqlx::query_as(&self.substitute_table_name(
             r#"
@@ -295,7 +295,7 @@ impl SessionStore for SqliteSessionStore {
     async fn store_session(&self, session: Session) -> Result<Option<String>> {
         let id = session.id();
         let string = serde_json::to_string(&session)?;
-        let mut connection = self.connection().await?;
+        let mut connection = *self.connection().await?;
 
         sqlx::query(&self.substitute_table_name(
             r#"
@@ -317,7 +317,7 @@ impl SessionStore for SqliteSessionStore {
 
     async fn destroy_session(&self, session: Session) -> Result {
         let id = session.id();
-        let mut connection = self.connection().await?;
+        let mut connection = *self.connection().await?;
         sqlx::query(&self.substitute_table_name(
             r#"
             DELETE FROM %%TABLE_NAME%% WHERE id = ?
@@ -331,7 +331,7 @@ impl SessionStore for SqliteSessionStore {
     }
 
     async fn clear_store(&self) -> Result {
-        let mut connection = self.connection().await?;
+        let mut connection = *self.connection().await?;
         sqlx::query(&self.substitute_table_name(
             r#"
             DELETE FROM %%TABLE_NAME%%

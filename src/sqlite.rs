@@ -238,7 +238,7 @@ impl SqliteSessionStore {
             "#,
         ))
         .bind(Utc::now().timestamp())
-        .execute(&mut connection)
+        .execute(&mut *connection)
         .await?;
 
         Ok(())
@@ -284,7 +284,7 @@ impl SessionStore for SqliteSessionStore {
         ))
         .bind(&id)
         .bind(Utc::now().timestamp())
-        .fetch_optional(&mut connection)
+        .fetch_optional(&mut *connection)
         .await?;
 
         Ok(result
@@ -309,7 +309,7 @@ impl SessionStore for SqliteSessionStore {
         .bind(&id)
         .bind(&string)
         .bind(&session.expiry().map(|expiry| expiry.timestamp()))
-        .execute(&mut connection)
+        .execute(&mut *connection)
         .await?;
 
         Ok(session.into_cookie_value())
@@ -324,7 +324,7 @@ impl SessionStore for SqliteSessionStore {
             "#,
         ))
         .bind(&id)
-        .execute(&mut connection)
+        .execute(&mut *connection)
         .await?;
 
         Ok(())
@@ -337,7 +337,7 @@ impl SessionStore for SqliteSessionStore {
             DELETE FROM %%TABLE_NAME%%
             "#,
         ))
-        .execute(&mut connection)
+        .execute(&mut *connection)
         .await?;
 
         Ok(())

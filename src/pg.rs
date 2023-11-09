@@ -233,7 +233,7 @@ impl PostgresSessionStore {
         let mut connection = *self.connection().await?;
         sqlx::query(&self.substitute_table_name("DELETE FROM %%TABLE_NAME%% WHERE expires < $1"))
             .bind(Utc::now())
-            .execute(&mut *connection)
+            .execute(&mut connection)
             .await?;
 
         Ok(())
@@ -277,7 +277,7 @@ impl SessionStore for PostgresSessionStore {
         ))
         .bind(&id)
         .bind(Utc::now())
-        .fetch_optional(&mut *connection)
+        .fetch_optional(&mut connection)
         .await?;
 
         Ok(result
@@ -302,7 +302,7 @@ impl SessionStore for PostgresSessionStore {
         .bind(&id)
         .bind(&string)
         .bind(&session.expiry())
-        .execute(&mut *connection)
+        .execute(&mut connection)
         .await?;
 
         Ok(session.into_cookie_value())
@@ -313,7 +313,7 @@ impl SessionStore for PostgresSessionStore {
         let mut connection = *self.connection().await?;
         sqlx::query(&self.substitute_table_name("DELETE FROM %%TABLE_NAME%% WHERE id = $1"))
             .bind(&id)
-            .execute(&mut *connection)
+            .execute(&mut connection)
             .await?;
 
         Ok(())
@@ -322,7 +322,7 @@ impl SessionStore for PostgresSessionStore {
     async fn clear_store(&self) -> Result {
         let mut connection = *self.connection().await?;
         sqlx::query(&self.substitute_table_name("TRUNCATE %%TABLE_NAME%%"))
-            .execute(&mut *connection)
+            .execute(&mut connection)
             .await?;
 
         Ok(())

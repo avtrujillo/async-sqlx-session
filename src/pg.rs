@@ -230,10 +230,10 @@ impl PostgresSessionStore {
     /// # Ok(()) }) }
     /// ```
     pub async fn cleanup(&self) -> sqlx::Result<()> {
-        let mut connection = *self.connection().await?;
+        let mut connection = self.connection().await?;
         sqlx::query(&self.substitute_table_name("DELETE FROM %%TABLE_NAME%% WHERE expires < $1"))
             .bind(Utc::now())
-            .execute(&mut connection)
+            .execute(&mut *connection)
             .await?;
 
         Ok(())
@@ -270,14 +270,14 @@ impl PostgresSessionStore {
 impl SessionStore for PostgresSessionStore {
     async fn load_session(&self, cookie_value: String) -> Result<Option<Session>> {
         let id = Session::id_from_cookie_value(&cookie_value)?;
-        let mut connection = *self.connection().await?;
+        let mut connection = self.connection().await?;
 
         let result: Option<(String,)> = sqlx::query_as(&self.substitute_table_name(
             "SELECT session FROM %%TABLE_NAME%% WHERE id = $1 AND (expires IS NULL OR expires > $2)"
         ))
         .bind(&id)
         .bind(Utc::now())
-        .fetch_optional(&mut connection)
+        .fetch_optional(&mut *connection)
         .await?;
 
         Ok(result
@@ -288,7 +288,7 @@ impl SessionStore for PostgresSessionStore {
     async fn store_session(&self, session: Session) -> Result<Option<String>> {
         let id = session.id();
         let string = serde_json::to_string(&session)?;
-        let mut connection = *self.connection().await?;
+        let mut connection = self.connection().await?;
 
         sqlx::query(&self.substitute_table_name(
             r#"
@@ -302,7 +302,7 @@ impl SessionStore for PostgresSessionStore {
         .bind(&id)
         .bind(&string)
         .bind(&session.expiry())
-        .execute(&mut connection)
+        .execute(&mut *connection)
         .await?;
 
         Ok(session.into_cookie_value())
@@ -310,19 +310,19 @@ impl SessionStore for PostgresSessionStore {
 
     async fn destroy_session(&self, session: Session) -> Result {
         let id = session.id();
-        let mut connection = *self.connection().await?;
+        let mut connection = self.connection().await?;
         sqlx::query(&self.substitute_table_name("DELETE FROM %%TABLE_NAME%% WHERE id = $1"))
             .bind(&id)
-            .execute(&mut connection)
+            .execute(&mut *connection)
             .await?;
 
         Ok(())
     }
 
     async fn clear_store(&self) -> Result {
-        let mut connection = *self.connection().await?;
+        let mut connection = self.connection().await?;
         sqlx::query(&self.substitute_table_name("TRUNCATE %%TABLE_NAME%%"))
-            .execute(&mut connection)
+            .execute(&mut *connection)
             .await?;
 
         Ok(())
